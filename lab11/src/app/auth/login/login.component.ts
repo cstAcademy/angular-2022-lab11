@@ -1,7 +1,9 @@
+import { AuthService } from './../auth.service';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { CurrentUserService } from '../current-user.service';
 
 @Component({
   selector: 'app-login',
@@ -11,7 +13,12 @@ import { Router } from '@angular/router';
 export class LoginComponent implements OnInit {
   logInForm!: FormGroup;
 
-  constructor(private router: Router, private _snackBar: MatSnackBar) {}
+  constructor(
+    private router: Router,
+    private _snackBar: MatSnackBar,
+    private authService: AuthService,
+    private currentUserService: CurrentUserService
+  ) {}
 
   ngOnInit(): void {
     this.initializeForm();
@@ -25,12 +32,33 @@ export class LoginComponent implements OnInit {
   }
 
   logIn() {
-    //todo
-    console.log('login');
-    this.router.navigateByUrl('');
-    this._snackBar.open('Log In Successfully!', '', {
-      duration: 2000,
-    });
+    this.authService
+      .login({
+        email: 'eve.holt@reqres.in',
+        password: 'cityslicka',
+      })
+      .subscribe(
+        (res) => {
+          this._snackBar.open('Log In Successfully!', '', {
+            duration: 2000,
+          });
+          this.router.navigateByUrl('');
+          this.saveUserData(res.token);
+        },
+        (error) => {
+          console.error(error);
+          this._snackBar.open('Log In Error!', '', {
+            duration: 2000,
+          });
+        }
+      );
+  }
+
+  saveUserData(token: string) {
+    this.currentUserService.saveTokenToLocalStorage(token);
+    this.currentUserService.setCurrentUserEmail(this.email?.value);
+
+    console.log(this.currentUserService.getToken());
   }
 
   get email() {
